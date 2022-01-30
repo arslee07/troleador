@@ -23,12 +23,17 @@ troleo = """
 ░░░░░░░░░░░░░░▀▄▄▄▄▄░░░░░░░░█░░
 """
 
+
+def cmd(s: str) -> bytes:
+    return str.encode(s + "\r\n")
+
+
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print(f"Connecting to server: {server}:{port}")
 irc.connect((server, port))
 print(f"Setting username: {username}")
-irc.send(str.encode("NICK " + username + "\r\n"))
-irc.send(str.encode(f"USER {username} * * :{username} \r\n"))
+irc.send(cmd("NICK " + username))
+irc.send(cmd(f"USER {username} * * :{username}"))
 
 connected = False
 while not connected:
@@ -40,18 +45,18 @@ while not connected:
 
     if "376" in text:
         print(f"Joining channel: {channel}")
-        irc.send(str.encode("JOIN " + channel + "\r\n"))
+        irc.send(cmd(f"JOIN {channel}"))
 
     if text.startswith("PING"):
-        irc.send(str.encode("PONG " + text.split()[1] + "\r\n"))
+        irc.send(cmd(f"PONG {text.split()[1]}"))
 
 while True:
     text = irc.recv(1024).decode().strip()
 
     if text.startswith("PING"):
-        irc.send(str.encode("PONG " + text.split()[1] + "\r\n"))
+        irc.send(cmd(f"PONG {text.split()[1]}"))
 
     if "!troleo" in text:
         print("Got command: !troleo")
         for i in troleo.strip().split("\n"):
-            irc.send(str.encode(f"PRIVMSG {channel} :" + i + "\r\n"))
+            irc.send(cmd(f"PRIVMSG {channel} :{i}"))
