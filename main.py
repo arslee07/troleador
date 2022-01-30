@@ -3,7 +3,7 @@ import socket
 server = "example.com"
 port = 6667
 channel = "#channel"
-username = "troleador"
+nickname = "troleador"
 
 troleo = """
 ░░░░░▄▄▄▄▀▀▀▀▀▀▀▀▄▄▄▄▄▄░░░░░░░
@@ -31,9 +31,9 @@ def cmd(s: str) -> bytes:
 irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 print(f"Connecting to server: {server}:{port}")
 irc.connect((server, port))
-print(f"Setting username: {username}")
-irc.send(cmd("NICK " + username))
-irc.send(cmd(f"USER {username} * * :{username}"))
+print(f"Setting nickname: {nickname}")
+irc.send(cmd(f"NICK {nickname}"))
+irc.send(cmd(f"USER {nickname} * * :{nickname}"))
 
 connected = False
 while not connected:
