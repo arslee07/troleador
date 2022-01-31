@@ -1,0 +1,10 @@
+[package]
+name = "troleador"
+version = "0.0.1"
+edition = "2021"
+
+[dependencies]
+
+[[bin]]
+name = "troleador"
+path = "main.rs"

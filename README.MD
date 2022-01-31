@@ -1,5 +1,5 @@
 # troleador
-a simple irc bot written on python (no external libs btw)
+a simple irc bot written on python and then to rust (no external libs btw)
 
 ## features
 - a little trolling
@@ -9,7 +9,7 @@ a simple irc bot written on python (no external libs btw)
 i just wanted to learn some irc protocol basics
 
 ## how to run
-just edit some vars in main.py and then run it
+just edit some vars in main.rs and then run it
 
 ## licsnse
 nah, just use it as you want
