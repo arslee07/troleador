@@ -1,5 +1,5 @@
 # troleador
-a simple irc bot written on python and then to rust (no external libs btw)
+a simple irc bot written on python and then rewritten on rust (no external libs btw)
 
 ## features
 - a little trolling
