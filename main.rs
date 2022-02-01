@@ -1,4 +1,4 @@
-use std::io::{prelude::*, BufReader, BufWriter};
+use std::io::{prelude::*, BufReader, BufWriter, Error};
 use std::net::TcpStream;
 
 const SERVER: &str = "example.com:6667";
@@ -23,33 +23,57 @@ const TROLEO: &str = "\
 ░░░░░░░░░░░░░░▀▄▄▄▄▄░░░░░░░░█░░\
 ";
 
-fn cmd(s: &str) -> Vec<u8> {
-    format!("{}\r\n", s).as_bytes().to_vec()
+struct Irc {
+    reader: BufReader<TcpStream>,
+    writer: BufWriter<TcpStream>,
+}
+
+impl Irc {
+    fn new(server: &str) -> Result<Irc, Error> {
+        let stream = TcpStream::connect(server)?;
+        let reader = BufReader::new(stream.try_clone()?);
+        let writer = BufWriter::new(stream.try_clone()?);
+
+        let irc = Irc { reader, writer };
+
+        Ok(irc)
+    }
+
+    fn send(&mut self, cmd: String) -> Result<(), Error> {
+        self.writer.write(&Irc::format_line(&cmd))?;
+        self.writer.flush()?;
+
+        Ok(())
+    }
+
+    fn receive(&mut self) -> String {
+        let mut text = String::new();
+        let _ = self.reader.read_line(&mut text);
+
+        text
+    }
+
+    fn format_line(s: &String) -> Vec<u8> {
+        format!("{}\r\n", s).as_bytes().to_vec()
+    }
 }
 
 fn main() -> std::io::Result<()> {
-    let mut stream = TcpStream::connect(SERVER)?;
+    let mut irc = Irc::new(SERVER)?;
     println!("Connected to server: {}", SERVER);
 
-    let mut reader = BufReader::new(stream.try_clone()?);
-    let mut writer = BufWriter::new(stream.try_clone()?);
-
-    writer.write(&cmd(&mut format!("NICK {}\r\n", NICKNAME)))?;
-    writer.flush()?;
-    writer.write(&cmd(&mut format!("USER {} * * :{}", NICKNAME, NICKNAME)))?;
-    writer.flush()?;
+    irc.send(format!("NICK {}\r\n", NICKNAME))?;
+    irc.send(format!("USER {} * * :{}", NICKNAME, NICKNAME))?;
 
     println!("Set username: {}", NICKNAME);
 
     let mut connected = false;
     while !connected {
-        let mut text = String::new();
-        let _ = reader.read_line(&mut text);
+        let text = irc.receive();
 
         if text.starts_with("PING") {
             let t: Vec<&str> = text.split(":").collect();
-            writer.write(&cmd(&mut format!("PONG :{}", t[1])))?;
-            writer.flush()?;
+            irc.send(format!("PONG :{}", t[1]))?;
         }
 
         if text.contains("366") {
@@ -59,8 +83,7 @@ fn main() -> std::io::Result<()> {
 
         if text.contains("376") {
             println!("Joinining channel: {}", CHANNEL);
-            writer.write(&cmd(&mut format!("JOIN {}", CHANNEL)))?;
-            writer.flush()?;
+            irc.send(format!("JOIN {}", CHANNEL))?;
         }
     }
 
@@ -69,13 +92,11 @@ fn main() -> std::io::Result<()> {
             break;
         }
 
-        let mut text = String::new();
-        let _ = reader.read_line(&mut text);
+        let text = irc.receive();
 
         if text.starts_with("PING") {
             let t: Vec<&str> = text.split(":").collect();
-            writer.write(&cmd(&mut format!("PONG :{}", t[1])))?;
-            writer.flush()?;
+            irc.send(format!("PONG :{}", t[1]))?;
         }
 
         if text.contains("!troleo") {
@@ -83,8 +104,7 @@ fn main() -> std::io::Result<()> {
 
             let lines: Vec<&str> = TROLEO.lines().collect();
             for i in lines {
-                stream.write(&cmd(&mut format!("PRIVMSG {} :{}", CHANNEL, i)))?;
-                writer.flush()?;
+                irc.send(format!("PRIVMSG {} :{}", CHANNEL, i))?;
             }
         }
     }
